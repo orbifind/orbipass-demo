@@ -65,6 +65,8 @@
     const ch = await crypto.subtle.importKey("raw", b(k), "AES-GCM", false, ["decrypt"]);
     const p = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b(d.dados.iv) }, ch, b(d.dados.ct))));
     for (let i = p.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+    // Quem tem chave começa dentro (os primeiros da lista entram no quadro).
+    p.sort((a, b) => Number(b.chaves) - Number(a.chaves));
     window.__demoPessoas = p;
   } catch (e) {
     localStorage.removeItem("orbipass-demo-chave");
