@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="static/img/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" href="static/img/icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="static/img/icone-180.png">
+<meta name="theme-color" content="#0c3a2b">
+<meta name="application-name" content="OrbiPass">
+<meta name="apple-mobile-web-app-title" content="OrbiPass">
+<title>OrbiPass · OrbiPass</title>
+<script src="static/tema.js"></script>
+<link rel="stylesheet" href="static/admin.css">
+
+<meta name="robots" content="noindex, nofollow">
+</head>
+<body class="fora">
+
+<main class="conteudo">
+<div class="tela-entrada">
+  <div class="caixa-entrada">
+    <span class="logo-orbifind grande"><img class="so-claro" src="static/img/orbifind-claro.png" alt="Orbifind"><img class="so-escuro" src="static/img/orbifind-escuro.png" alt="Orbifind"></span>
+    <h1>OrbiPass</h1>
+    <p class="subtitulo">Entre para acessar o quadro de presença</p>
+    <p class="msg erro" id="erro" hidden>Usuário ou senha incorretos.</p>
+<form class="form" id="entrar">
+  <label>Usuário <input name="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus></label>
+  <label>Senha <input name="senha" type="password" autocomplete="current-password" required></label>
+  <button type="submit" class="botao primario largo">Entrar</button>
+</form>
+  </div>
+  <div class="nota-entrada"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15.5" r="1.6" fill="currentColor"/></svg><span>Depois de entrar, este navegador fica conectado. Ideal para a TV do quadro.</span></div>
+  <p class="credito-entrada">OrbiPass v1.0.5 · CNPJ 67.121.310/0001-35</p>
+</div>
+</main>
+
+
+<script>document.getElementById("entrar").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const f = ev.target;
+  const erro = document.getElementById("erro");
+  const botao = f.querySelector("button");
+  erro.hidden = true;
+  botao.disabled = true;
+  const b = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  try {
+    const d = await (await fetch("static/dados.json", { cache: "no-store" })).json();
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(f.usuario.value.trim().toLowerCase() + "\n" + f.senha.value), "PBKDF2", false, ["deriveKey"]);
+    const chave = await crypto.subtle.deriveKey({ name: "PBKDF2", hash: "SHA-256", salt: b(d.sal), iterations: d.iter }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    const k = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b(d.chave.iv) }, chave, b(d.chave.ct)));
+    localStorage.setItem("orbipass-demo-chave", btoa(String.fromCharCode(...k)));
+    location.replace("./");
+  } catch (e) {
+    erro.hidden = false;
+    botao.disabled = false;
+  }
+});</script>
+</body>
+</html>

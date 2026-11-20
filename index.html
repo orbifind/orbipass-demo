@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="static/img/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" href="static/img/icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="static/img/icone-180.png">
+<meta name="theme-color" content="#0c3a2b">
+<meta name="application-name" content="OrbiPass">
+<meta name="apple-mobile-web-app-title" content="OrbiPass">
+<title>OrbiPass · Demonstração</title>
+<meta name="robots" content="noindex, nofollow">
+<script src="static/tema.js"></script>
+<link rel="stylesheet" href="static/quadro.css">
+</head>
+<body class="tv">
+<div class="quadro" id="quadro" data-modo="tv">
+  <header class="q-topo">
+    <span class="placa-cliente q-cliente"><img src="static/img/cliente.png" alt="Logo da empresa"></span>
+    <div class="q-cabeca">
+      <h1 id="q-titulo">&nbsp;</h1>
+      <div class="q-resumo">
+        <span class="q-total"><b id="q-total">0</b> <span id="q-total-rotulo">pessoas presentes</span></span>
+        <span class="q-chip q-chip-cipa" title="Pessoas com CIPA presentes"><svg class="ic ic-cipa" viewBox="0 0 24 24" role="img" aria-label="CIPA"><rect x="1.5" y="1.5" width="21" height="21" rx="5.5" fill="#16a34a"/><path d="M9.6 5.5h4.8v4.1h4.1v4.8h-4.1v4.1H9.6v-4.1H5.5V9.6h4.1z" fill="#fff"/></svg><b id="q-cipa">0</b><span>CIPA</span></span>
+        <span class="q-chip q-chip-chave" title="Pessoas com chaves presentes"><svg class="ic ic-chave" viewBox="0 0 24 24" role="img" aria-label="Chaves"><circle cx="7.2" cy="12" r="4.4" fill="none" stroke="#d99a0b" stroke-width="2.8"/><path d="M11.4 12h10.2M17.6 12v3.6M20.8 12v2.6" fill="none" stroke="#d99a0b" stroke-width="2.8" stroke-linecap="round"/></svg><b id="q-chaves">0</b><span>com chaves</span></span>
+        <span class="q-areas" id="q-areas"></span>
+      </div>
+    </div>
+    <div class="q-relogio">
+      <div id="q-hora">--:--</div>
+      <div id="q-data"></div>
+      <div class="q-status" id="q-status"><i></i><span id="q-status-texto">Conectando…</span></div>
+    </div>
+  </header>
+  <section class="q-lista" id="q-lista" aria-live="polite"><ul id="q-nomes"></ul><p class="q-vazio" id="q-vazio" hidden>Ninguém na empresa no momento</p></section>
+  <footer class="q-rodape">
+    <div class="q-movimentos" id="q-movimentos"></div>
+    <div class="credito q-credito"><span class="logo-orbifind "><img class="so-claro" src="static/img/orbifind-claro.png" alt="Orbifind"><img class="so-escuro" src="static/img/orbifind-escuro.png" alt="Orbifind"></span><div class="credito-texto"><span class="credito-sistema"><strong>OrbiPass</strong> <span class="credito-versao">v1.0.5</span></span><span class="credito-cnpj">CNPJ 67.121.310/0001-35</span></div></div>
+  </footer>
+  <div class="q-avisos" id="q-avisos"></div>
+  <button type="button" class="q-som-bloqueado" id="q-som-bloqueado" hidden>
+    <svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M16 9.5a4 4 0 0 1 0 5M19 7a8 8 0 0 1 0 10"/></svg>
+    <span>Toque na tela para ativar o som</span>
+  </button>
+  <button type="button" class="q-menu-botao" id="q-menu-botao" aria-label="Menu" title="Menu">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+  </button>
+  <div class="q-menu" id="q-menu" hidden>
+    <button type="button" id="q-tela-cheia">Tela cheia</button>
+    <button type="button" id="q-som">Som: ligado</button>
+    <button type="button" id="q-volume">Volume: médio</button>
+    <button type="button" id="q-testar-som">Testar sons</button>
+    <button type="button" id="q-tema" class="alternar-tema">Tema: claro</button>
+    <button type="button" id="q-modo-areas" hidden>Áreas: separadas</button>
+    
+  </div>
+</div>
+<script>(async () => {
+  const b = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  const k = localStorage.getItem("orbipass-demo-chave");
+  if (!k) return location.replace("login.html");
+  try {
+    const d = await (await fetch("static/dados.json", { cache: "no-store" })).json();
+    const ch = await crypto.subtle.importKey("raw", b(k), "AES-GCM", false, ["decrypt"]);
+    const p = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b(d.dados.iv) }, ch, b(d.dados.ct))));
+    for (let i = p.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+    window.__demoPessoas = p;
+  } catch (e) {
+    localStorage.removeItem("orbipass-demo-chave");
+    return location.replace("login.html");
+  }
+  if (!/[?&]demo=\d/.test(location.search)) history.replaceState(null, "", "?demo=80");
+  const s = document.createElement("script");
+  s.src = "static/quadro.js";
+  document.body.appendChild(s);
+})();</script>
+</body>
+</html>
